@@ -33,6 +33,9 @@ class ConnectionControlInterface:
 
     def show(self, name: str) -> ConnectionDetails:
         raise NotImplementedError
+    
+    def active(self) -> List[Connection]:
+        raise NotImplementedError
 
     def reload(self) -> None:
         raise NotImplementedError
@@ -97,6 +100,16 @@ class ConnectionControl(ConnectionControlInterface):
                 key, value = m.groups()
                 results[key] = None if value in ('--', '""') else value
         return results
+    
+    def active(self) -> ConnectionDetails:
+        r = self._syscmd.nmcli(['connection', 'show', '--active'])
+        results = []
+        for row in r.split('\n')[1:]:
+            if len(row) == 0:
+                continue
+            results.append(Connection.parse(row))
+        return results
+
 
     def reload(self) -> None:
         self._syscmd.nmcli(['connection', 'reload'])
